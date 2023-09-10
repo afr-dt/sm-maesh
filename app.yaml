@@ -1,0 +1,68 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-deployment
+  labels:
+    app: nginx1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx1
+  template:
+    metadata:
+      labels:
+        app: nginx1
+    spec:
+      containers:
+        - name: nginx1
+          image: nginx:stable-bullseye
+          resources:
+            limits:
+              memory: "128Mi"
+              cpu: "500m"
+          ports:
+            - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx1-service
+spec:
+  type: LoadBalancer
+  selector:
+    app: nginx1
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ubuntu-deployment
+  labels:
+    app: ubuntu1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ubuntu1
+  template:
+    metadata:
+      labels:
+        app: ubuntu1
+    spec:
+      containers:
+        - name: ubuntu1
+          image: ubuntu:22.10
+          command: ["/bin/bash"]
+          args:
+            [
+              "-c",
+              "apt update && apt install -y curl; while true; do curl nginx1-service.default.svc.cluster.local; sleep 20;done",
+            ]
+          resources:
+            limits:
+              memory: "1024Mi"
+              cpu: "500m"
